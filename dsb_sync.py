@@ -1,5 +1,8 @@
 import datetime
+import re
 import pytz
+import requests
+from bs4 import BeautifulSoup
 from icalendar import Calendar, Event
 import dsbapi
 
@@ -20,7 +23,7 @@ STUNDENZEITEN = {
 
 def erstelle_kalender():
     client = dsbapi.DSBApi(DSB_USER, DSB_PASS)
-    eintraege_listen = client.fetch_entries()
+    plaene = client.fetch_timetables()
 
     cal = Calendar()
     cal.add('prodid', '-//DSBmobile Sync//DE')
@@ -29,63 +32,70 @@ def erstelle_kalender():
 
     gefundene_eintraege = 0
 
-    for tabelle in eintraege_listen:
-        for eintrag in tabelle:
-            klasse = str(eintrag.get('class', ''))
-            art = str(eintrag.get('type', 'Aenderung')).strip()
-            datum_str = str(eintrag.get('date', ''))
-            stunde_str = str(eintrag.get('lesson', ''))
-            fach = str(eintrag.get('subject', 'Unbekannt')).strip()
-            raum = str(eintrag.get('room', '')).strip()
-            vertreter = str(eintrag.get('new_teacher', '')).strip()
-            text = str(eintrag.get('text', '')).strip()
+    for plan in plaene:
+        url = plan.get('url') if isinstance(plan, dict) else getattr(plan, 'url', None)
+        if not url:
+            continue
 
-            if MEINE_KLASSE.lower() in klasse.lower():
-                try:
-                    tag, monat, jahr = map(int, datum_str.split('.'))
-                    datum = datetime.date(jahr, monat, tag)
+        resp = requests.get(url)
+        resp.encoding = resp.apparent_encoding
+        soup = BeautifulSoup(resp.text, 'html.parser')
 
-                    stunden = [int(s.strip()) for s in stunde_str.replace('-', ',').split(',') if s.strip().isdigit()]
-                    if not stunden:
-                        continue
+        # Datum aus der Seite suchen (z.B. 19.11.2026)
+        text_gesamt = soup.get_text(" ", strip=True)
+        datum_match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', text_gesamt)
+        if not datum_match:
+            continue
+        tag, monat, jahr = map(int, datum_match.groups())
+        datum = datetime.date(jahr, monat, tag)
 
-                    start_stunde = min(stunden)
-                    end_stunde = max(stunden)
+        aktuelle_klasse = ""
 
-                    if start_stunde not in STUNDENZEITEN or end_stunde not in STUNDENZEITEN:
-                        continue
+        for zeile in soup.find_all('tr'):
+            zellen = [z.get_text(" ", strip=True) for z in zeile.find_all(['td', 'th'])]
+            if not zellen or all(z == "" for z in zellen):
+                continue
 
-                    start_zeit = datetime.datetime.strptime(STUNDENZEITEN[start_stunde][0], "%H:%M").time()
-                    end_zeit = datetime.datetime.strptime(STUNDENZEITEN[end_stunde][1], "%H:%M").time()
+            # Gruppenueberschrift erkennen (z.B. "9C" oder "10A")
+            if len(zellen) == 1 or (zellen[0] and all(z == "" for z in zellen[1:])):
+                aktuelle_klasse = zellen[0].strip()
+                continue
 
-                    start_dt = tz.localize(datetime.datetime.combine(datum, start_zeit))
-                    end_dt = tz.localize(datetime.datetime.combine(datum, end_zeit))
+            if MEINE_KLASSE.lower() not in aktuelle_klasse.lower():
+                continue
 
-                    ist_entfall = "entfall" in art.lower() or "frei" in art.lower() or "entfall" in text.lower()
-                    titel_prefix = "ENTFALL" if ist_entfall else art.upper()
+            # Untis-Spalten: 0=Stunde, 1=Vertreter, 2=Fach, 3=Raum, 4=Art/Text...
+            stunde_str = zellen[0]
+            stunden = [int(s) for s in re.findall(r'\d+', stunde_str)]
+            if not stunden:
+                continue
 
-                    details = [f"Art: {art}"]
-                    if vertreter:
-                        details.append(f"Vertretung: {vertreter}")
-                    if raum:
-                        details.append(f"Raum: {raum}")
-                    if text:
-                        details.append(f"Hinweis: {text}")
+            start_stunde = min(stunden)
+            end_stunde = max(stunden)
+            if start_stunde not in STUNDENZEITEN or end_stunde not in STUNDENZEITEN:
+                continue
 
-                    event = Event()
-                    event.add('summary', f"{titel_prefix}: {fach} ({stunde_str}. Std)")
-                    event.add('dtstart', start_dt)
-                    event.add('dtend', end_dt)
-                    if raum:
-                        event.add('location', raum)
-                    event.add('description', "\n".join(details))
-                    event.add('uid', f"dsb-{datum_str}-{stunde_str}-{fach}-{art}@dsbsync")
+            vertreter = zellen[1] if len(zellen) > 1 else ""
+            fach = zellen[2] if len(zellen) > 2 else "Unbekannt"
+            rest = " | ".join([z for z in zellen[3:] if z])
 
-                    cal.add_component(event)
-                    gefundene_eintraege += 1
+            ist_entfall = ("---" in vertreter or "entfall" in rest.lower() or "frei" in rest.lower())
+            prefix = "ENTFALL" if ist_entfall else f"VERTRETUNG ({vertreter})"
 
-                except Exception as e:
-                    print(f"Eintrag uebersprungen: {e}")
+            start_zeit = datetime.datetime.strptime(STUNDENZEITEN[start_stunde][0], "%H:%M").time()
+            end_zeit = datetime.datetime.strptime(STUNDENZEITEN[end_stunde][1], "%H:%M").time()
+            start_dt = tz.localize(datetime.datetime.combine(datum, start_zeit))
+            end_dt = tz.localize(datetime.datetime.combine(datum, end_zeit))
+
+            event = Event()
+            event.add('summary', f"{prefix}: {fach} ({stunde_str}. Std)")
+            event.add('dtstart', start_dt)
+            event.add('dtend', end_dt)
+            event.add('description', f"Klasse: {aktuelle_klasse}\nVertreter: {vertreter}\nFach: {fach}\nDetails: {rest}")
+            event.add('uid', f"dsb-{datum}-{stunde_str}-{fach}-{vertreter}@dsbsync")
+
+            cal.add_component(event)
+            gefundene_eintraege += 1
 
     with open('entfaelle.ics', 'wb') as f:
         f.write(cal.to_ical())
