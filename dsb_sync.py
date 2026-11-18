@@ -3,10 +3,9 @@ import pytz
 from icalendar import Calendar, Event
 import dsbapi
 
-# ================= EINSTELLUNGEN =================
-DSB_USER = "177802"          
-DSB_PASS = "Ado2201"     
-MEINE_KLASSE = "9C"               
+DSB_USER = "177802"
+DSB_PASS = "Ado2201"
+MEINE_KLASSE = "9C"
 
 STUNDENZEITEN = {
     1: ("08:00", "08:45"),
@@ -18,7 +17,6 @@ STUNDENZEITEN = {
     7: ("13:30", "14:15"),
     8: ("14:20", "15:05"),
 }
- =================================================
 
 def erstelle_kalender():
     client = dsbapi.DSBApi(DSB_USER, DSB_PASS)
@@ -62,7 +60,7 @@ def erstelle_kalender():
                     end_dt = tz.localize(datetime.datetime.combine(datum, end_zeit))
 
                     event = Event()
-                    event.add('summary', f"❌ ENTFALL: {fach} ({stunde_str}. Std)")
+                    event.add('summary', f"ENTFALL: {fach} ({stunde_str}. Std)")
                     event.add('dtstart', start_dt)
                     event.add('dtend', end_dt)
                     event.add('description', f"Art: {eintrag.get('type')}\nHinweis: {text}")
@@ -72,13 +70,14 @@ def erstelle_kalender():
                     gefundene_entfaelle += 1
 
                 except Exception as e:
-                    print(f"Eintrag übersprungen wegen Formatierungsfehler: {e}")
+                    print(f"Eintrag uebersprungen: {e}")
 
     with open('entfaelle.ics', 'wb') as f:
         f.write(cal.to_ical())
 
-    print(f"Fertig! {gefundene_entfaelle} Entfälle in 'entfaelle.ics' gespeichert.")
+    print(f"Fertig! {gefundene_entfaelle} Entfaelle gespeichert.")
 
 if __name__ == "__main__":
     erstelle_kalender()
+
   
