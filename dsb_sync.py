@@ -27,18 +27,20 @@ def erstelle_kalender():
     cal.add('version', '2.0')
     tz = pytz.timezone('Europe/Berlin')
 
-    gefundene_entfaelle = 0
+    gefundene_eintraege = 0
 
     for tabelle in eintraege_listen:
         for eintrag in tabelle:
             klasse = str(eintrag.get('class', ''))
-            art = str(eintrag.get('type', '')).lower()
+            art = str(eintrag.get('type', 'Aenderung')).strip()
             datum_str = str(eintrag.get('date', ''))
             stunde_str = str(eintrag.get('lesson', ''))
-            fach = str(eintrag.get('subject', 'Unbekannt'))
-            text = str(eintrag.get('text', ''))
+            fach = str(eintrag.get('subject', 'Unbekannt')).strip()
+            raum = str(eintrag.get('room', '')).strip()
+            vertreter = str(eintrag.get('new_teacher', '')).strip()
+            text = str(eintrag.get('text', '')).strip()
 
-            if MEINE_KLASSE.lower() in klasse.lower() and ("entfall" in art or "frei" in art or "entfall" in text.lower()):
+            if MEINE_KLASSE.lower() in klasse.lower():
                 try:
                     tag, monat, jahr = map(int, datum_str.split('.'))
                     datum = datetime.date(jahr, monat, tag)
@@ -59,15 +61,28 @@ def erstelle_kalender():
                     start_dt = tz.localize(datetime.datetime.combine(datum, start_zeit))
                     end_dt = tz.localize(datetime.datetime.combine(datum, end_zeit))
 
+                    ist_entfall = "entfall" in art.lower() or "frei" in art.lower() or "entfall" in text.lower()
+                    titel_prefix = "ENTFALL" if ist_entfall else art.upper()
+
+                    details = [f"Art: {art}"]
+                    if vertreter:
+                        details.append(f"Vertretung: {vertreter}")
+                    if raum:
+                        details.append(f"Raum: {raum}")
+                    if text:
+                        details.append(f"Hinweis: {text}")
+
                     event = Event()
-                    event.add('summary', f"ENTFALL: {fach} ({stunde_str}. Std)")
+                    event.add('summary', f"{titel_prefix}: {fach} ({stunde_str}. Std)")
                     event.add('dtstart', start_dt)
                     event.add('dtend', end_dt)
-                    event.add('description', f"Art: {eintrag.get('type')}\nHinweis: {text}")
-                    event.add('uid', f"dsb-{datum_str}-{stunde_str}-{fach}@dsbsync")
+                    if raum:
+                        event.add('location', raum)
+                    event.add('description', "\n".join(details))
+                    event.add('uid', f"dsb-{datum_str}-{stunde_str}-{fach}-{art}@dsbsync")
 
                     cal.add_component(event)
-                    gefundene_entfaelle += 1
+                    gefundene_eintraege += 1
 
                 except Exception as e:
                     print(f"Eintrag uebersprungen: {e}")
@@ -75,9 +90,7 @@ def erstelle_kalender():
     with open('entfaelle.ics', 'wb') as f:
         f.write(cal.to_ical())
 
-    print(f"Fertig! {gefundene_entfaelle} Entfaelle gespeichert.")
+    print(f"Fertig! {gefundene_eintraege} Eintraege gespeichert.")
 
 if __name__ == "__main__":
     erstelle_kalender()
-
-  
