@@ -1,0 +1,25 @@
+name: DSB Kalender Sync
+on:
+  schedule:
+    - cron: '0 * * * *' # Läuft jede Stunde
+  workflow_dispatch:     # Ermöglicht manuellen Start per Button
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install dsbapipy icalendar pytz
+      - run: python dsb_sync.py
+      - run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add entfaelle.ics
+          git commit -m "Kalender aktualisiert" || exit 0
+          git push
