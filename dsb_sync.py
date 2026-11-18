@@ -4,9 +4,9 @@ from icalendar import Calendar, Event
 import dsbapi
 
 # ================= EINSTELLUNGEN =================
-DSB_USER = "DEINE_DSB_ID"          # z.B. "123456"
-DSB_PASS = "DEIN_DSB_PASSWORT"    # z.B. "schueler123"
-MEINE_KLASSE = "10b"               # Genau so schreiben, wie es im Plan steht!
+DSB_USER = "177802"          
+DSB_PASS = "Ado2201"     
+MEINE_KLASSE = "9C"               
 
 STUNDENZEITEN = {
     1: ("08:00", "08:45"),
@@ -18,7 +18,7 @@ STUNDENZEITEN = {
     7: ("13:30", "14:15"),
     8: ("14:20", "15:05"),
 }
-# =================================================
+ =================================================
 
 def erstelle_kalender():
     client = dsbapi.DSBApi(DSB_USER, DSB_PASS)
