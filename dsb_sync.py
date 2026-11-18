@@ -21,9 +21,32 @@ STUNDENZEITEN = {
     8: ("14:20", "15:05"),
 }
 
+def hole_plan_urls(client):
+    urls = []
+    # Methode 1: Interne Methode von dsbapi nutzen, falls vorhanden
+    for attr in ['fetch_timetable_urls', 'get_timetable_urls', 'fetch_entries']:
+        if hasattr(client, attr):
+            try:
+                res = getattr(client, attr)()
+                def extrahiere(obj):
+                    if isinstance(obj, str) and obj.startswith("http"):
+                        urls.append(obj)
+                    elif isinstance(obj, dict):
+                        for v in obj.values():
+                            extrahiere(v)
+                    elif isinstance(obj, (list, tuple)):
+                        for item in obj:
+                            extrahiere(item)
+                extrahiere(res)
+                if urls:
+                    return list(dict.fromkeys(urls))
+            except Exception:
+                pass
+    return urls
+
 def erstelle_kalender():
     client = dsbapi.DSBApi(DSB_USER, DSB_PASS)
-    plaene = client.fetch_timetable()
+    urls = hole_plan_urls(client)
 
     cal = Calendar()
     cal.add('prodid', '-//DSBmobile Sync//DE')
@@ -32,16 +55,11 @@ def erstelle_kalender():
 
     gefundene_eintraege = 0
 
-    for plan in plaene:
-        url = plan.get('url') if isinstance(plan, dict) else getattr(plan, 'url', None)
-        if not url:
-            continue
-
+    for url in urls:
         resp = requests.get(url)
         resp.encoding = resp.apparent_encoding
         soup = BeautifulSoup(resp.text, 'html.parser')
 
-        # Datum aus der Seite suchen (z.B. 19.11.2026)
         text_gesamt = soup.get_text(" ", strip=True)
         datum_match = re.search(r'(\d{1,2})\.(\d{1,2})\.(\d{4})', text_gesamt)
         if not datum_match:
@@ -56,7 +74,6 @@ def erstelle_kalender():
             if not zellen or all(z == "" for z in zellen):
                 continue
 
-            # Gruppenueberschrift erkennen (z.B. "9C" oder "10A")
             if len(zellen) == 1 or (zellen[0] and all(z == "" for z in zellen[1:])):
                 aktuelle_klasse = zellen[0].strip()
                 continue
@@ -64,7 +81,6 @@ def erstelle_kalender():
             if MEINE_KLASSE.lower() not in aktuelle_klasse.lower():
                 continue
 
-            # Untis-Spalten: 0=Stunde, 1=Vertreter, 2=Fach, 3=Raum, 4=Art/Text...
             stunde_str = zellen[0]
             stunden = [int(s) for s in re.findall(r'\d+', stunde_str)]
             if not stunden:
@@ -100,7 +116,7 @@ def erstelle_kalender():
     with open('entfaelle.ics', 'wb') as f:
         f.write(cal.to_ical())
 
-    print(f"Fertig! {gefundene_eintraege} Eintraege gespeichert.")
+    print(f"Fertig! {len(urls)} Plaene geprueft, {gefundene_eintraege} Eintraege gespeichert.")
 
 if __name__ == "__main__":
     erstelle_kalender()
