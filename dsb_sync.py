@@ -23,7 +23,7 @@ STUNDENZEITEN = {
 
 def erstelle_kalender():
     client = dsbapi.DSBApi(DSB_USER, DSB_PASS)
-    plaene = client.fetch_timetables()
+    plaene = client.fetch_timetable()
 
     cal = Calendar()
     cal.add('prodid', '-//DSBmobile Sync//DE')
