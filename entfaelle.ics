@@ -31,11 +31,11 @@ UID:dsb-2026-08-24-5-F-MG@dsbsync
 DESCRIPTION:Klasse: 9C\nVertreter: MG\nFach: F\nDetails: F | A111 | A111
 END:VEVENT
 BEGIN:VEVENT
-SUMMARY:VERTRETUNG (???): 3.FS-La (8. Std)
+SUMMARY:ENTFALL: 3.FS-La (8. Std)
 DTSTART;TZID=Europe/Berlin:20260824T142000
 DTEND;TZID=Europe/Berlin:20260824T150500
-UID:dsb-2026-08-24-8-3.FS-La-???@dsbsync
-DESCRIPTION:Klasse: 9C\nVertreter: ???\nFach: 3.FS-La\nDetails: 3.FS-La | 
- A312 | A312
+UID:dsb-2026-08-24-8-3.FS-La----@dsbsync
+DESCRIPTION:Klasse: 9C\nVertreter: ---\nFach: 3.FS-La\nDetails: --- | A312
+  | --- | entfällt
 END:VEVENT
 END:VCALENDAR
