@@ -2,12 +2,12 @@ BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//DSBmobile Sync//DE
 BEGIN:VEVENT
-SUMMARY:VERTRETUNG (???): MA/INF (1 - 2. Std)
+SUMMARY:ENTFALL: MA/INF (1 - 2. Std)
 DTSTART;TZID=Europe/Berlin:20260824T080000
 DTEND;TZID=Europe/Berlin:20260824T093500
-UID:dsb-2026-08-24-1 - 2-MA/INF-???@dsbsync
-DESCRIPTION:Klasse: 9C\nVertreter: ???\nFach: MA/INF\nDetails: MA/INF | A-
- 115 | A-115
+UID:dsb-2026-08-24-1 - 2-MA/INF----@dsbsync
+DESCRIPTION:Klasse: 9C\nVertreter: ---\nFach: MA/INF\nDetails: --- | A-115
+  | --- | Kurs BOR entfällt
 END:VEVENT
 BEGIN:VEVENT
 SUMMARY:KLASSE ABWESEND / ENTFALL (5-7. Std)
