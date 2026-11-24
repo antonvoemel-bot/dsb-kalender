@@ -17,4 +17,19 @@ UID:dsb-abwesend-2026-08-24-5-7@dsbsync
 DESCRIPTION:Abwesende Klassen: 9A (5-7)\, 9B (5-7)\, 9C (5-7)\, 9D (5-7)\,
   10A (5-7)\, 10C (5-7)\, 10D (5-7)
 END:VEVENT
+BEGIN:VEVENT
+SUMMARY:VERTRETUNG (BT): KStd (1. Std)
+DTSTART;TZID=Europe/Berlin:20260824T080000
+DTEND;TZID=Europe/Berlin:20260824T084500
+UID:dsb-2026-08-24-1-KStd-BT@dsbsync
+DESCRIPTION:Klasse: 9C\nVertreter: BT\nFach: KStd\nDetails: KStd | A301 | 
+ ???
+END:VEVENT
+BEGIN:VEVENT
+SUMMARY:VERTRETUNG (BT): DE (2. Std)
+DTSTART;TZID=Europe/Berlin:20260824T085000
+DTEND;TZID=Europe/Berlin:20260824T093500
+UID:dsb-2026-08-24-2-DE-BT@dsbsync
+DESCRIPTION:Klasse: 9C\nVertreter: BT\nFach: DE\nDetails: DE | A301 | ???
+END:VEVENT
 END:VCALENDAR
