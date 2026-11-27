@@ -1,20 +1,4 @@
 BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//DSBmobile Sync//DE
-BEGIN:VEVENT
-SUMMARY:ENTFALL: GE (6 - 7. Std)
-DTSTART;TZID=Europe/Berlin:20260824T124000
-DTEND;TZID=Europe/Berlin:20260824T141500
-UID:dsb-2026-08-24-6 - 7-GE----@dsbsync
-DESCRIPTION:Klasse: 9C\nVertreter: ---\nFach: GE\nDetails: --- | A004 | --
- - | entfällt
-END:VEVENT
-BEGIN:VEVENT
-SUMMARY:ENTFALL: E (8. Std)
-DTSTART;TZID=Europe/Berlin:20260824T142000
-DTEND;TZID=Europe/Berlin:20260824T150500
-UID:dsb-2026-08-24-8-E----@dsbsync
-DESCRIPTION:Klasse: 9C\nVertreter: ---\nFach: E\nDetails: --- | A111 | ---
-  | entfällt
-END:VEVENT
 END:VCALENDAR
